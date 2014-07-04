@@ -1,6 +1,8 @@
 package ar.edu.tadp.viajes
 
 class Viaje(var origen: Direccion, var destino: Direccion, var usuario: Usuario) {
+  var recorridoElegido: List[Tramo] = null
+
   def armarRecorrido(): List[Tramo] = {
     var mediosCercaOrigen: List[TransporteCerca] = ModuloTransporte.mediosTransporteCerca(origen)
     var mediosCercaDestino: List[TransporteCerca] = ModuloTransporte.mediosTransporteCerca(destino)
@@ -19,12 +21,14 @@ class Viaje(var origen: Direccion, var destino: Direccion, var usuario: Usuario)
     }
 
     if (posiblesRecorridos.isEmpty) { //Logica de combinacion
-      return List()
+      recorridoElegido = List()
     } else if (posiblesRecorridos.length == 1) {
-      return posiblesRecorridos.head
+      recorridoElegido = posiblesRecorridos.head
     } else {
-      return usuario.seleccionarRecorrido(origen, destino, posiblesRecorridos)
+      recorridoElegido = usuario.seleccionarRecorrido(origen, destino, posiblesRecorridos)
     }
+
+    return recorridoElegido
   }
 
   private def buscarCombinacion(mediosCercaOrigen: List[TransporteCerca], mediosCercaDestino: List[TransporteCerca]): List[List[Tramo]] = {
@@ -65,12 +69,24 @@ class Viaje(var origen: Direccion, var destino: Direccion, var usuario: Usuario)
     return 0
   }
 
-  def calcularDistancia(): Int = {
+  def calcularDistancia(): Double = {
     return 0
   }
 
-  def calcularTiempo(): Int = {
-    return 0
+  def calcularTiempo(): Double = {
+    var tiempoTotal: Double = ModuloTransporte.distanciaPie(origen, recorridoElegido.head.origen)
+
+    tiempoTotal = tiempoTotal + ModuloTransporte.distanciaPie(recorridoElegido.last.destino, destino)
+
+    for (unTramo <- recorridoElegido) {
+      tiempoTotal = tiempoTotal + unTramo.calcularDistancia()
+    }
+
+    if (!recorridoElegido.head.transporte.esIgual(recorridoElegido.last.transporte)) {
+      tiempoTotal = tiempoTotal + recorridoElegido.head.transporte.calcularTiempoCombinacion(recorridoElegido.head.destino, recorridoElegido.last.origen, recorridoElegido.last.transporte)
+    }
+
+    return tiempoTotal
   }
 
   /*
